@@ -1,0 +1,57 @@
+function myFunction() {
+  
+}
+function importCSVFiles()
+{
+  var ss = SpreadsheetApp.getActiveSpreadsheet(); 
+  const csvFolderName = 'CSVfolder';                                       // Folder containing csv files and the Archive folder
+  const rootFolderId = '******Folder***********';                // Root folder
+  const archiveFolderId = '*******Folder*******';                           // Archive Folder
+  const destinationSheetName = 'Form Responses 1'; // destination sheet in spreadsheet
+  
+  const root = DriveApp.getFolderById(rootFolderId);
+  const archiveFolder = DriveApp.getFolderById(archiveFolderId);
+  
+  const fileName =/ *.csv/;
+  
+  var rootFolders = root.getFolders();
+  
+  const sheet = ss.getSheetByName(destinationSheetName);
+  var csvArray = [];
+  
+  while (rootFolders.hasNext()) 
+  {
+    var folder = rootFolders.next ();
+    Logger.log('folder.getName()',folder.getName());
+    if (folder.getName() === csvFolderName) 
+    {
+      importCSV(folder);
+    }
+    else 
+    {
+      var csvFolder = folder.getFoldersByName(csvFolderName);
+      while (csvFolder.hasNext()) 
+      {
+        importCSV(csvFolder.next());
+      }
+    }
+  }
+  
+  function importCSV(folder) 
+  {
+    var files = folder.getFiles();
+    while (files.hasNext()) 
+    {
+      var file = files.next();
+      Logger.log('file.getName()',file.getName());
+      csvArray = file.getBlob().getDataAsString("UTF-8");
+      csvArray = Utilities.parseCsv(csvArray);
+      csvArray.shift();
+      sheet.insertRowsAfter(1,csvArray.length);
+      sheet.getRange (2,1,csvArray.length,csvArray[0].length).setValues(csvArray);
+      
+      file.moveTo(archiveFolder);
+    }
+  }
+  
+}
